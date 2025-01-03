@@ -1,6 +1,7 @@
 from sc2reader import load_replay
+from collections import defaultdict
 
-from starcraft_injection_manager.InjectionManager import InjectionManager
+from injection_manager.managers.InjectionManager import InjectionManager
 
 class BatchInjector:
     def __init__(self, base, session_factory, storage):
@@ -19,7 +20,6 @@ class BatchInjector:
 
                     ## constuct and attach hashmap of events w/event.name
                     self._prepare(replay)
-
                     self.injector.inject(replay, session)
 
             except Exception as e:

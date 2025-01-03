@@ -1,4 +1,4 @@
-from starcraft_injection_manager import BatchInjector, InjectionManager
+from starcraft_injection_manager.BatchInjector import BatchInjector
 from starcraft_data_orm.warehouse.config import SessionLocal
 from starcraft_data_orm.warehouse import initialize_warehouse, WarehouseBase
 
