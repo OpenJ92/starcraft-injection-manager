@@ -21,8 +21,6 @@ class InjectionManager():
         :param session: Database session supporting flush, commit and rollback:
         """
 
-
-
         try:
             for relation in self.metadata.sorted_tables:
                 name = f"{relation.schema}.{relation.name}"
