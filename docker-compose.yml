@@ -1,0 +1,28 @@
+services:
+  starcraft-injection-manager:
+    build:
+      context: .
+    container_name: starcraft-injection-manager
+    volumes:
+      - .:/app  # Maps the current directory to /app in the container
+    working_dir: /app  # Set the working directory to /app
+    environment:
+      DB_HOST: starcraft-db
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: password
+      DB_NAME: starcraft_dev
+    tty: true          # Keeps the container open for interaction
+    stdin_open: true   # Allows interactive input
+    networks:
+      - starcraft-network
+    command: ["bash"]  # Default command to start a shell
+
+volumes:
+  postgres_data:
+
+networks:
+  starcraft-network:
+    external: true
+    name: starcraft-data-orm_starcraft-network
+
