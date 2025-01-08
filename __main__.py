@@ -1,5 +1,5 @@
 from starcraft_injection_manager.BatchInjector import BatchInjector
-from starcraft_data_orm.warehouse.config import SessionLocal
+from starcraft_data_orm.warehouse.config import SessionLocal, SyncSessionLocal
 from starcraft_data_orm.warehouse import initialize_warehouse, WarehouseBase
 
 from storage_bridge import LocalStorage
@@ -22,7 +22,9 @@ def main():
     print("Initializing starcraft_data_orm...")
     initialize_warehouse()
 
-    batch = BatchInjector(WarehouseBase, SessionLocal, LocalStorage('examples'))
+    breakpoint()
+
+    batch = BatchInjector(WarehouseBase, SyncSessionLocal, LocalStorage('examples'))
     batch.inject()
 
 if __name__ == "__main__":
