@@ -1,6 +1,6 @@
 from sc2reader import load_replay
 from collections import defaultdict
-from asyncio import gather, semaphore
+from asyncio import gather, Semaphore
 
 from injection_manager.managers.EventInjectionManager import EventInjectionManager
 
