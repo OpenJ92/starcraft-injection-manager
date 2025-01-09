@@ -1,0 +1,7 @@
+# Python-related ignores
+__pycache__/
+*.py[cod]
+*.swp
+*.egg-info/
+*.eggs/
+*.log
