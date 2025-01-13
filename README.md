@@ -11,7 +11,8 @@
 - **Batch Injection**: Supports bulk data processing with tools for managing dependencies between data models.
 - **Error Handling**: Implements conflict resolution strategies to address issues like simultaneous insertions and race conditions.
 - **Customizable Pipelines**: Flexible architecture allows for tailored injection workflows to meet project-specific requirements.
-- **Storage Management**: Integrates with the `storage-bridge` project to handle data transfers between local and S3 storage seamlessly.
+- **Storage Management**: Integrates with [`storage-bridge`](https://github.com/OpenJ92/storage-bridge) to handle data transfers between local and S3 storage seamlessly.
+- **Repository Integration**: Leverages [`injection-manager`](https://github.com/OpenJ92/injection-manager) and [`log-manager`](https://github.com/OpenJ92/log-manager) for managing data workflows and logging operations efficiently within the repository.
 
 ## Installation
 ``` bash
