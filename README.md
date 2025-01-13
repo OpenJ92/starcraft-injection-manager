@@ -7,7 +7,7 @@
 ## Features
 
 - **Async Injection Framework**: Handles high-volume data ingestion with modern async Python capabilities.
-- **Integration with `starcraft-data-orm`**: Uses prebuilt SQLAlchemy Base objects for seamless ORM integration.
+- **Integration with [`starcraft-data-orm`](https://github.com/OpenJ92/starcraft-data-orm)**: Uses prebuilt SQLAlchemy Base objects for seamless ORM integration.
 - **Batch Injection**: Supports bulk data processing with tools for managing dependencies between data models.
 - **Error Handling**: Implements conflict resolution strategies to address issues like simultaneous insertions and race conditions.
 - **Customizable Pipelines**: Flexible architecture allows for tailored injection workflows to meet project-specific requirements.
