@@ -5,6 +5,12 @@ from asyncio import gather, Semaphore
 from injection_manager.managers.EventInjectionManager import EventInjectionManager
 
 class EventBatchInjector:
+    """
+    Deprecated: Not in use due to single session limitations in EventInjectionManager.
+
+    This class remains in the codebase for potential future use after resolving session issues.
+    """
+
     def __init__(self, base, session_factory, storage, max_concurrent_tasks=5):
         self.session_factory = session_factory
         self.injector = EventInjectionManager(base)
