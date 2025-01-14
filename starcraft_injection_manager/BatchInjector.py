@@ -83,7 +83,7 @@ class BatchInjector:
                     raise ValueError(f"Download failed, no replay path returned for {replay_file}")
                 print(f"Downloaded replay to: {replay_path}")
 
-                replay = load_replay(replay_path, load_map=True)
+                replay = load_replay(replay_path)
                 print(f"Replay loaded: {replay}")
 
                 self._prepare(replay)
