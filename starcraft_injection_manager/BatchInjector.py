@@ -5,7 +5,6 @@ from asyncio import gather, Semaphore
 from injection_manager.managers.InjectionManager import InjectionManager
 
 class BatchInjector:
-    class BatchInjector:
     """
     The BatchInjector class manages the batch processing and injection of StarCraft II replay files into a database.
 
