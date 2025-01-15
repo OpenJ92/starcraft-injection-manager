@@ -60,7 +60,7 @@ class BatchInjector:
 
         except Exception as e:
             print(f"Unexpected error: {e}")
-            raise
+            raise e
 
     async def _process_replay(self, replay_file):
         """
