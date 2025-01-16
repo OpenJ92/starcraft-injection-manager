@@ -3,6 +3,9 @@ from collections import defaultdict
 from asyncio import gather, Semaphore
 
 from injection_manager.managers.InjectionManager import InjectionManager
+from log_manager.db_logger import db_logger
+
+from starcraft_injection_manager.log.impl_process_replay import ProcessReplay
 
 class BatchInjector:
     """
@@ -62,6 +65,7 @@ class BatchInjector:
             print(f"Unexpected error: {e}")
             raise e
 
+    @db_logger('', custom_logger=ProcessReplay())
     async def _process_replay(self, replay_file):
         """
         Processes a single replay file by downloading, loading, preparing,
@@ -76,14 +80,11 @@ class BatchInjector:
         """
         async with self.semaphore:
             try:
-                print(f"Starting download for: {replay_file}")
                 replay_path = await self.storage.async_download(replay_file, f'examples/{replay_file}')
                 if not replay_path:
                     raise ValueError(f"Download failed, no replay path returned for {replay_file}")
-                print(f"Downloaded replay to: {replay_path}")
 
                 replay = load_replay(replay_path)
-                print(f"Replay loaded: {replay}")
 
                 self._prepare(replay)
                 async with self.session_factory() as session:
