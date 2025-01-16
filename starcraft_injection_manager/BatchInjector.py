@@ -65,7 +65,6 @@ class BatchInjector:
             print(f"Unexpected error: {e}")
             raise e
 
-    @db_logger('', custom_logger=ProcessReplay())
     async def _process_replay(self, replay_file):
         """
         Processes a single replay file by downloading, loading, preparing,
@@ -80,19 +79,71 @@ class BatchInjector:
         """
         async with self.semaphore:
             try:
-                replay_path = await self.storage.async_download(replay_file, f'examples/{replay_file}')
-                if not replay_path:
-                    raise ValueError(f"Download failed, no replay path returned for {replay_file}")
-
-                replay = load_replay(replay_path)
-
+                replay_path = await self._download_replay(replay_file)
+                replay = self._parse_replay(replay_path)
                 self._prepare(replay)
+
                 async with self.session_factory() as session:
-                    await self.injector.inject(replay, session)
+                    await self._inject_replay(replay, session)
 
             except Exception as e:
                 print(f"Unexpected error: {e}")
                 raise e
+
+    @db_logger("injection", logger=ProcessReplay(), stage="download")
+    async def _download_replay(self, replay_file):
+        """
+        Downloads a replay file from the storage system.
+
+        Args:
+            replay_file (str): The name of the replay file to download.
+
+        Returns:
+            str: The local path where the replay file was downloaded.
+
+        Raises:
+            ValueError: If the download operation fails and no valid path is returned.
+        """
+
+        replay_path = await self.storage.async_download(replay_file, f'staging/{replay_file}')
+        if not replay_path:
+            raise ValueError(f"Download failed, no replay path returned for {replay_file}")
+
+    @db_logger("injection", logger=ProcessReplay(), stage="parse")
+    def _parse_replay(self, replay_path):
+         """
+        Parses a replay file into a structured replay object.
+
+        Args:
+            replay_path (str): The local file path of the replay to parse.
+
+        Returns:
+            Replay: The parsed replay object.
+
+        Raises:
+            ValueError: If the replay parsing fails or the resulting replay object is invalid.
+        """
+        replay = load_replay(replay_path)
+        if not replay:
+            raise ValueError(f"Failed to parse replay at {replay_path}")
+        return replay
+
+    @db_logger("injection", logger=ProcessReplay(), stage="inject")
+    async def _inject_replay(self, replay, session):
+        """
+        Injects a parsed replay object into the database.
+
+        Args:
+            replay (Replay): The parsed replay object to inject.
+            session (AsyncSession): The database session used for the injection process.
+
+        Returns:
+            None
+
+        Raises:
+            Exception: If an error occurs during the database injection process.
+        """
+        await self.injector.inject(replay, session)
 
     def _prepare(self, replay):
         """
