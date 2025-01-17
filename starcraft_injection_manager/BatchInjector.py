@@ -5,7 +5,7 @@ from asyncio import gather, Semaphore
 from injection_manager.managers.InjectionManager import InjectionManager
 from log_manager.db_logger import db_logger
 
-from starcraft_injection_manager.log.impl_process_replay import ProcessReplay
+from log.impl_process_replay import LogDownload, LogParse, LogInjection
 
 class BatchInjector:
     """
@@ -79,19 +79,18 @@ class BatchInjector:
         """
         async with self.semaphore:
             try:
-                replay_path = await self._download_replay(replay_file)
-                replay = self._parse_replay(replay_path)
-                self._prepare(replay)
+                replay_path = await self._download_replay(replay_file=replay_file, storage=self.storage)
+                replay = await self._parse_replay(replay_path=replay_path)
 
                 async with self.session_factory() as session:
-                    await self._inject_replay(replay, session)
+                    await self._inject_replay(replay=replay, session=session, injector=self.injector)
 
             except Exception as e:
                 print(f"Unexpected error: {e}")
                 raise e
 
-    @db_logger("injection", logger=ProcessReplay(), stage="download")
-    async def _download_replay(self, replay_file):
+    @db_logger(action="download", logger=LogDownload())
+    async def _download_replay(self, replay_file, storage):
         """
         Downloads a replay file from the storage system.
 
@@ -105,13 +104,14 @@ class BatchInjector:
             ValueError: If the download operation fails and no valid path is returned.
         """
 
-        replay_path = await self.storage.async_download(replay_file, f'staging/{replay_file}')
+        replay_path = await storage.async_download(replay_file, f'examples/{replay_file}')
         if not replay_path:
             raise ValueError(f"Download failed, no replay path returned for {replay_file}")
+        return replay_path
 
-    @db_logger("injection", logger=ProcessReplay(), stage="parse")
-    def _parse_replay(self, replay_path):
-         """
+    @db_logger(action="parse", logger=LogParse())
+    async def _parse_replay(self, replay_path):
+        """
         Parses a replay file into a structured replay object.
 
         Args:
@@ -126,10 +126,11 @@ class BatchInjector:
         replay = load_replay(replay_path)
         if not replay:
             raise ValueError(f"Failed to parse replay at {replay_path}")
+        self._prepare(replay)
         return replay
 
-    @db_logger("injection", logger=ProcessReplay(), stage="inject")
-    async def _inject_replay(self, replay, session):
+    @db_logger(action="inject", logger=LogInjection())
+    async def _inject_replay(self, replay, session, injector):
         """
         Injects a parsed replay object into the database.
 
@@ -143,7 +144,7 @@ class BatchInjector:
         Raises:
             Exception: If an error occurs during the database injection process.
         """
-        await self.injector.inject(replay, session)
+        await injector.inject(replay, session)
 
     def _prepare(self, replay):
         """
