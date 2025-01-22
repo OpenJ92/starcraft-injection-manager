@@ -7,29 +7,33 @@ from starcraft_data_orm.warehouse import WarehouseBase
 
 from injection_manager.managers.InjectionManager import InjectionManager
 
+from datetime import datetime
+
 batch_log_manager = BatchLogManager(InjectionManager(WarehouseBase), SessionLocal)
 
 class LogInjection(LoggingOperations):
     def __init__(self):
         self.batch_log_manager = batch_log_manager
 
-    def log_pre_action(self, action_name: str, **kwargs):
+    def log_pre_action(self, action_name: str, replay, **kwargs):
         """
         Log details before the action begins.
         """
+        #print(f"Start injeciton on {replay.filehash}")
         pass
 
-    def log_post_action_success(self, action_name: str, **kwargs):
+    def log_post_action_success(self, action_name: str, replay, **kwargs):
         """
         Log details after the action completes successfully.
         """
+        #print(f"Complete injeciton on {replay.filehash}")
         pass
 
-    def log_post_action_failure(self, action_name: str, exception: Exception, **kwargs):
+    def log_post_action_failure(self, action_name: str, replay, exception: Exception, **kwargs):
         """
         Log details after the action fails.
         """
-        breakpoint()
+        #print(f"Fail injeciton on {replay.filehash}")
         pass
 
 class LogDownload(LoggingOperations):
@@ -52,7 +56,6 @@ class LogDownload(LoggingOperations):
         """
         Log details after the action fails.
         """
-        breakpoint()
         pass
 
 class LogParse(LoggingOperations):
@@ -63,17 +66,19 @@ class LogParse(LoggingOperations):
         """
         Log details before the action begins.
         """
+        # print(f"Start Parsing replay {kwargs.get('replay_path')}")
         pass
 
     def log_post_action_success(self, action_name: str, **kwargs):
         """
         Log details after the action completes successfully.
         """
+        # print(f"Complete Parsing replay {kwargs.get('replay_path')}")
         pass
 
     def log_post_action_failure(self, action_name: str, exception: Exception, **kwargs):
         """
         Log details after the action fails.
         """
-        breakpoint()
+        # print(f"Failed Parsing replay {kwargs.get('replay_path')}")
         pass
