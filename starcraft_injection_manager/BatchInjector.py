@@ -1,11 +1,20 @@
 from sc2reader import load_replay
 from collections import defaultdict
 from asyncio import gather, Semaphore
+from sqlalchemy.exc import IntegrityError
 
 from injection_manager.managers.InjectionManager import InjectionManager
 from log_manager.db_logger import db_logger
-
 from log.impl_process_replay import LogDownload, LogParse, LogInjection
+
+from starcraft_injection_manager.RetryOn import RetryOn
+
+import traceback
+import time
+import logging
+import random
+from asyncio import sleep, run
+
 
 class BatchInjector:
     """
@@ -22,7 +31,7 @@ class BatchInjector:
     """
 
 
-    def __init__(self, base, session_factory, storage, max_concurrent_tasks=5):
+    def __init__(self, base, session_factory, storage, max_concurrent_tasks=8):
         """
         Initializes the BatchInjector with necessary dependencies.
 
@@ -30,7 +39,7 @@ class BatchInjector:
             base: The sqlalchemy base used by the InjectionManager.
             session_factory: A callable that provides an asynchronous sqlalchemy database session.
             storage: A storage handler for managing replay files (e.g., S3 or local storage).
-            max_concurrent_tasks (int): The maximum number of concurrent tasks allowed. Default is 5.
+            max_concurrent_tasks (int): The maximum number of concurrent tasks allowed. Default is 8.
         """
         self.session_factory = session_factory
         self.injector = InjectionManager(base)
@@ -48,23 +57,18 @@ class BatchInjector:
         try:
             tasks = []
             replay_files = await self.storage.async_list_files()
+            random.shuffle(replay_files)
 
-            for replay_file in replay_files:
+            for replay_file in replay_files[:300]:
                 coroutine = self._process_replay(replay_file)
                 tasks.append(coroutine)
 
             results = await gather(*tasks, return_exceptions=True)
 
-            for index, result in enumerate(results):
-                if isinstance(result, Exception):
-                    print(f"Task {index} failed with exception: {result}")
-                else:
-                    print(f"Task {index} completed successfully.")
-
         except Exception as e:
-            print(f"Unexpected error: {e}")
             raise e
 
+    @RetryOn((IntegrityError, ))
     async def _process_replay(self, replay_file):
         """
         Processes a single replay file by downloading, loading, preparing,
@@ -79,6 +83,9 @@ class BatchInjector:
         """
         async with self.semaphore:
             try:
+                jitter = random.uniform(0, 0.3)  # 0 to 450 ms
+                await sleep(jitter)
+
                 replay_path = await self._download_replay(replay_file=replay_file, storage=self.storage)
                 replay = await self._parse_replay(replay_path=replay_path)
 
@@ -86,7 +93,15 @@ class BatchInjector:
                     await self._inject_replay(replay=replay, session=session, injector=self.injector)
 
             except Exception as e:
-                print(f"Unexpected error: {e}")
+                error_type = type(e).__name__
+                error_message = str(e)
+                stack_trace = traceback.format_exc()
+
+                print("Error occurred!")
+                print(f"Type: {error_type}")
+                ## print(f"Message: {error_message}")
+                ## print("Stack Trace:")
+                ## print(stack_trace)
                 raise e
 
     @db_logger(action="download", logger=LogDownload())
@@ -163,4 +178,26 @@ class BatchInjector:
             replay.events_dictionary[event.name].append(event)
 
         del replay.events
+
+
+class SyncBatchInjector(BatchInjector):
+    def __init__(self, base, session_factory, storage):
+        self.session_factory = session_factory
+        self.injector = InjectionManager(base)
+        self.storage = storage
+
+    async def inject(self):
+        await self.process_all_replays()
+
+    async def process_all_replays(self):
+        replay_files = await self.storage.async_list_files()
+        for replay_file in replay_files[:300]:
+            await self._process_replay(replay_file)
+
+    async def _process_replay(self, replay_file):
+        replay_path = await self._download_replay(replay_file=replay_file, storage=self.storage)
+        replay = await self._parse_replay(replay_path=replay_path)
+        async with self.session_factory() as session:
+            await self._inject_replay(replay=replay, session=session, injector=self.injector)
+
 
