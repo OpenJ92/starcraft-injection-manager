@@ -31,7 +31,7 @@ class BatchInjector:
     """
 
 
-    def __init__(self, base, session_factory, storage, max_concurrent_tasks=8):
+    def __init__(self, base, session_factory, storage, max_concurrent_tasks=4):
         """
         Initializes the BatchInjector with necessary dependencies.
 
@@ -59,7 +59,7 @@ class BatchInjector:
             replay_files = await self.storage.async_list_files()
             random.shuffle(replay_files)
 
-            for replay_file in replay_files[:300]:
+            for replay_file in replay_files[:50]:
                 coroutine = self._process_replay(replay_file)
                 tasks.append(coroutine)
 
@@ -99,9 +99,9 @@ class BatchInjector:
 
                 print("Error occurred!")
                 print(f"Type: {error_type}")
-                ## print(f"Message: {error_message}")
-                ## print("Stack Trace:")
-                ## print(stack_trace)
+                print(f"Message: {error_message[:500]}")
+                print("Stack Trace:")
+                print(stack_trace[500:])
                 raise e
 
     @db_logger(action="download", logger=LogDownload())
@@ -119,7 +119,7 @@ class BatchInjector:
             ValueError: If the download operation fails and no valid path is returned.
         """
 
-        replay_path = await storage.async_download(replay_file, f'examples/{replay_file}')
+        replay_path = await storage.async_download(replay_file, f'../external/{replay_file}')
         if not replay_path:
             raise ValueError(f"Download failed, no replay path returned for {replay_file}")
         return replay_path
