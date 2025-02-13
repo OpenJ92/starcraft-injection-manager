@@ -9,6 +9,7 @@ services:
       - ../log-manager:/submodules/log-manager
       - ../injection-manager:/submodules/injection-manager
       - ../storage-bridge:/submodules/storage-bridge
+      - ../gather-manager/external:/external
     working_dir: /app  # Set the working directory to /app
     environment:
       DB_HOST: starcraft-db

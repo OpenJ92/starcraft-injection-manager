@@ -29,14 +29,24 @@ async def main():
     print("Initializing starcraft_data_orm...")
     initialize_warehouse()
 
-    batch = BatchInjector(WarehouseBase,SessionLocal,AsyncLocalStorage('examples'), max_concurrent_tasks=32)
+    import psutil
+
+    num_physical = psutil.cpu_count(logical=False)  # Use for multiprocessing
+    num_logical = psutil.cpu_count(logical=True)    # Use for asyncio tasks
+    print(num_physical, num_logical)
+
+    num_workers = min(num_physical, 32)  # Limit to a reasonable number
+
+    batch = BatchInjector( WarehouseBase,SessionLocal,AsyncLocalStorage('../external')
+                         , max_concurrent_tasks = num_workers-1
+                         )
     await batch.inject()
 
     ## batch = SyncBatchInjector(WarehouseBase,SessionLocal,AsyncLocalStorage('examples'))
     ## await batch.inject()
 
     # Re-enable printing
-    # sys.stdout = sys.__stdout__
+    sys.stdout = sys.__stdout__
 
 if __name__ == "__main__":
     run(main())
